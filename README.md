@@ -110,8 +110,6 @@ python3 agent.py
 ## Usage Examples
 
 Once running, you can ask questions like:
-
-**Example Queries:**
 - "What movies are in the database?"
 - "Tell me about The Matrix"
 - "Recommend me some films like The Dark Knight."
@@ -129,7 +127,7 @@ To exit the agent, type any of:
 make format
 ```
 
-```
+
 
 ## Dependencies
 
