@@ -1,5 +1,9 @@
 # Text2Cypher ReAct Agent Example
 
+This repo provides a simple example of how to build a ReAct agent with MCP and local tools. 
+
+Specifically this repo builds a [Text2Cypher](https://graphrag.com/reference/graphrag/text2cypher/) ReAct agent with the [Neo4j Cypher MCP Server](https://github.com/neo4j-contrib/mcp-neo4j/tree/main/servers/mcp-neo4j-cypher). The agent also has extended capabilities by exposing local tools for it to use.
+
 A conversational AI agent that connects to a Neo4j Movies database and can answer movie-related questions using natural language. Built with LangGraph's implementation of a ReAct agent, the Neo4j Cypher MCP server, and a custom movie recommendations tool.
 
 ## Features
