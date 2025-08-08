@@ -1,0 +1,23 @@
+[project]
+name = "text2cypher-react-agent-example"
+version = "0.1.0"
+description = "A Text2Cypher ReAct agent built with LangGraph and the Neo4j Cypher MCP server."
+readme = "README.md"
+requires-python = ">=3.10,<4.0"
+dependencies = [
+    "langchain>=0.3.27",
+    "langchain-mcp-adapters>=0.1.9",
+    "langchain-openai>=0.3.29",
+    "langgraph>=0.6.4",
+    "neo4j>=5.28.2",
+    "openai>=1.99.5",
+    "pydantic>=2.11.7",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12.8",
+]
+
+[tool.ruff]
+line-length = 100
