@@ -1,6 +1,7 @@
 from typing import TypedDict, Optional
 
 class ResponseTableRecord(TypedDict):
+    "A record created for the response table. The contents of this record may be used for further evaluation."
     question_id: str
     question: str
     expected_answer: str
@@ -16,6 +17,7 @@ class ResponseTableRecord(TypedDict):
     error: Optional[str]
 
 class QuestionRecord(TypedDict):
+    "A record read from the questions yaml file."
     id: Optional[str]
     question: str
     answer: Optional[str]
