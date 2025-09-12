@@ -1,0 +1,42 @@
+questions:
+  # IN-SCOPE QUESTIONS - These can be answered using the available data
+  - question: "What are the top 5 highest-rated movies by IMDb rating?"
+    answer: "Query movies ordered by imdbRating DESC, limit 5. Returns movie titles and their ratings."
+    id: "top_rated_movies"
+
+  - question: "Which actors have appeared in the most movies?"
+    answer: "Count ACTED_IN relationships per Actor, order by count DESC. Returns actor names and movie counts."
+    id: "most_prolific_actors"
+
+  - question: "What movies did Tom Hanks direct and act in?"
+    answer: "Match Person with name 'Tom Hanks', find movies where he has both ACTED_IN and DIRECTED relationships."
+    id: "actor_director_same_movie"
+
+  - question: "Which genre has the highest average IMDb rating?"
+    answer: "Group movies by genre via IN_GENRE relationship, calculate average imdbRating per genre."
+    id: "best_genre_by_rating"
+
+  - question: "What are the most expensive movies (by budget) from the 1990s?"
+    answer: "Filter movies by year 1990-1999, order by budget DESC. Returns titles, years, and budgets."
+    id: "expensive_90s_movies"
+
+  - question: "Which users have rated the most movies?"
+    answer: "Count RATED relationships per User, order by count DESC. Returns user names/IDs and rating counts."
+    id: "most_active_users"
+
+  - question: "What movies have both 'Action' and 'Drama' genres?"
+    answer: "Match movies that have IN_GENRE relationships to both Action and Drama genre nodes."
+    id: "action_drama_movies"
+
+  # OUT-OF-SCOPE QUESTIONS - These cannot be answered with the available data
+  - question: "What are the current box office earnings for movies released this week?"
+    answer: "Cannot be answered - database lacks real-time box office data and current release information."
+    id: "current_box_office"
+
+  - question: "Which streaming platforms have the rights to stream each movie?"
+    answer: "Cannot be answered - database has no streaming platform or licensing information."
+    id: "streaming_platforms"
+
+  - question: "What are the detailed production costs broken down by department for each movie?"
+    answer: "Cannot be answered - database only has total budget, not detailed production cost breakdowns."
+    id: "production_cost_breakdown"

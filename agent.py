@@ -1,3 +1,5 @@
+"""This is a single file containing all the code to create a simple agent that can answer questions about the movie database."""
+
 import asyncio
 import os
 from typing import Any
