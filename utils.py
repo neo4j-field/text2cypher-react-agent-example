@@ -1,7 +1,7 @@
 import yaml
-from langgraph.prebuilt.chat_agent_executor import AgentState
 from langchain_core.messages import AnyMessage
 from langchain_core.messages.utils import count_tokens_approximately, trim_messages
+from langgraph.prebuilt.chat_agent_executor import AgentState
 
 
 def get_questions_from_yaml(file_path: str) -> list[dict[str, str]]:
@@ -21,10 +21,10 @@ def get_questions_from_yaml(file_path: str) -> list[dict[str, str]]:
         - answer: str -> The expected answer to the question.
         - id: str -> The id of the question.
     """
-    with open(file_path, 'r') as file:
-        return yaml.safe_load(file).get('questions', [])
-    
-    
+    with open(file_path, "r") as file:
+        return yaml.safe_load(file).get("questions", [])
+
+
 def pre_model_hook(state: AgentState) -> dict[str, list[AnyMessage]]:
     """
     This function will be called every time before the node that calls LLM.

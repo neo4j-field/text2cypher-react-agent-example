@@ -97,14 +97,14 @@ A conversational AI agent that connects to a Neo4j Movies database and can answe
 ```bash
 make run-agent-uv
 # or
-uv run python3 agent.py
+uv run python3 single_file_agent.py
 ```
 
 ### Using pip/standard Python
 ```bash
 make run-agent
 # or
-python3 agent.py
+python3 single_file_agent.py
 ```
 
 ## Usage Examples
@@ -119,6 +119,38 @@ To exit the agent, type any of:
 - `exit`
 - `quit` 
 - `q`
+
+## Evaluation
+
+This repo also contains a simple local evaluation suite. This may be used and extended to evaluate your own agents. 
+
+### Running Evaluations
+
+To run 
+1. Configure the `eval.py` file with the LLM name, tools and prompt you would like to use 
+2. Ensure you have populated the `questions.yaml` file with your eval question set
+3. Run `make run-eval-uv` or `make run-eval` depending on your package manager
+4. The eval results CSV will be saved to `evals/output/<file-name>.csv`
+5. View the contents with `review.ipynb`
+6. Generate a `.txt` report with `make generate-report-uv csv-name=<file-name>` or `make generate-report csv-name=<file-name>` depending on your package manager
+
+### Eval CSV Structure 
+
+The resulting evaluation CSV will contain the following columns:
+
+* question_id: str
+* question: str
+* expected_answer: str
+* agent_final_answer: Optional[str]
+* generated_cypher: list[ReadNeo4jCypherToolInput]
+* model: str
+* available_tools: list[str]
+* called_tools: list[str]
+* num_messages: Optional[int]
+* num_llm_calls: Optional[int]
+* num_tool_calls: Optional[int]
+* response_time: Optional[float]
+* error: Optional[str]
 
 ## Development
 

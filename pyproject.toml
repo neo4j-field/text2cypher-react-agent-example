@@ -5,6 +5,7 @@ description = "A Text2Cypher ReAct agent built with LangGraph and the Neo4j Cyph
 readme = "README.md"
 requires-python = ">=3.10,<4.0"
 dependencies = [
+    "ipykernel>=6.30.1",
     "langchain>=0.3.27",
     "langchain-mcp-adapters>=0.1.9",
     "langchain-openai>=0.3.29",

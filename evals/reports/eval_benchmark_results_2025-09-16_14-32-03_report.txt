@@ -1,0 +1,299 @@
+1.)
+Question: What are the top 5 highest-rated movies by IMDb rating?
+Model: openai:gpt-4.1
+Available Tools: ['get_neo4j_schema', 'read_neo4j_cypher', 'find_movie_recommendations']
+Number of Messages: 6
+Number of LLM Calls: 3
+Number of Tool Calls: 2
+Called Tools: get_neo4j_schema-{}, read_neo4j_cypher-{'query': 'MATCH (m:Movie)\nWHERE m.imdbRating IS NOT NULL\nRETURN m.title AS title, m.imdbRating AS imdbRating, m.imdbVotes AS imdbVotes, m.year AS year\nORDER BY m.imdbRating DESC, m.imdbVotes DESC\nLIMIT 5'}
+Text2Cypher Queries:
+1.)
+MATCH (m:Movie)
+WHERE m.imdbRating IS NOT NULL
+RETURN m.title AS title, m.imdbRating AS imdbRating, m.imdbVotes AS imdbVotes, m.year AS year
+ORDER BY m.imdbRating DESC, m.imdbVotes DESC
+LIMIT 5
+Final Answer: The top 5 highest-rated movies by IMDb rating in the database are:
+
+1. Band of Brothers (2001)
+   - IMDb Rating: 9.6 (213,089 votes)
+
+2. The Civil War (1990)
+   - IMDb Rating: 9.5 (4,942 votes)
+
+3. The Shawshank Redemption (1994)
+   - IMDb Rating: 9.3 (1,626,900 votes)
+
+4. Cosmos (1980)
+   - IMDb Rating: 9.3 (19,533 votes)
+
+5. The Godfather (1972)
+   - IMDb Rating: 9.2 (1,110,051 votes)
+
+These movies are rated highest according to IMDb ratings as stored in the Neo4j database, with vote counts for reference.
+
+================================================
+
+2.)
+Question: Which actors have appeared in the most movies?
+Model: openai:gpt-4.1
+Available Tools: ['get_neo4j_schema', 'read_neo4j_cypher', 'find_movie_recommendations']
+Number of Messages: 6
+Number of LLM Calls: 3
+Number of Tool Calls: 2
+Called Tools: get_neo4j_schema-{}, read_neo4j_cypher-{'query': 'MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)\nRETURN a.name AS actor, count(m) AS movie_count\nORDER BY movie_count DESC\nLIMIT 10'}
+Text2Cypher Queries:
+1.)
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+RETURN a.name AS actor, count(m) AS movie_count
+ORDER BY movie_count DESC
+LIMIT 10
+Final Answer: The actors who have appeared in the most movies, according to the database, are:
+
+1. Robert De Niro – 56 movies
+2. Bruce Willis – 49 movies
+3. Samuel L. Jackson – 45 movies
+4. Nicolas Cage – 45 movies
+5. Michael Caine – 40 movies
+6. Clint Eastwood – 40 movies
+7. Tom Hanks – 38 movies
+8. John Cusack – 38 movies
+9. Morgan Freeman – 38 movies
+10. Gene Hackman – 38 movies
+
+These figures are based on the number of ACTED_IN relationships each actor has with Movie nodes in the database.
+
+================================================
+
+3.)
+Question: What movies did Tom Hanks direct and act in?
+Model: openai:gpt-4.1
+Available Tools: ['get_neo4j_schema', 'read_neo4j_cypher', 'find_movie_recommendations']
+Number of Messages: 6
+Number of LLM Calls: 3
+Number of Tool Calls: 2
+Called Tools: get_neo4j_schema-{}, read_neo4j_cypher-{'query': "MATCH (p:Person {name: 'Tom Hanks'})-[:ACTED_IN]->(m:Movie)<-[:DIRECTED]-(p)\nRETURN m.title AS MovieTitle, m.year AS Year, m.imdbId AS IMDB_ID\nORDER BY m.year"}
+Text2Cypher Queries:
+1.)
+MATCH (p:Person {name: 'Tom Hanks'})-[:ACTED_IN]->(m:Movie)<-[:DIRECTED]-(p)
+RETURN m.title AS MovieTitle, m.year AS Year, m.imdbId AS IMDB_ID
+ORDER BY m.year
+Final Answer: Tom Hanks both directed and acted in the movie Larry Crowne (2011).
+
+Details:
+- Title: Larry Crowne
+- Year: 2011
+- IMDb ID: tt1583420
+
+This is the only movie found in the database where Tom Hanks served as both director and actor. If you need more information about this film or Tom Hanks's other roles, let me know!
+
+================================================
+
+4.)
+Question: Which genre has the highest average IMDb rating?
+Model: openai:gpt-4.1
+Available Tools: ['get_neo4j_schema', 'read_neo4j_cypher', 'find_movie_recommendations']
+Number of Messages: 8
+Number of LLM Calls: 4
+Number of Tool Calls: 3
+Called Tools: get_neo4j_schema-{}, read_neo4j_cypher-{'query': 'MATCH (g:Genre)<-[:IN_GENRE]-(m:Movie)\nWHERE exists(m.imdbRating)\nWITH g.name AS genre, avg(m.imdbRating) AS avg_rating\nRETURN genre, avg_rating\nORDER BY avg_rating DESC\nLIMIT 1'}, read_neo4j_cypher-{'query': 'MATCH (g:Genre)<-[:IN_GENRE]-(m:Movie)\nWHERE m.imdbRating IS NOT NULL\nWITH g.name AS genre, avg(m.imdbRating) AS avg_rating\nRETURN genre, avg_rating\nORDER BY avg_rating DESC\nLIMIT 1'}
+Text2Cypher Queries:
+1.)
+MATCH (g:Genre)<-[:IN_GENRE]-(m:Movie)
+WHERE exists(m.imdbRating)
+WITH g.name AS genre, avg(m.imdbRating) AS avg_rating
+RETURN genre, avg_rating
+ORDER BY avg_rating DESC
+LIMIT 1
+2.)
+MATCH (g:Genre)<-[:IN_GENRE]-(m:Movie)
+WHERE m.imdbRating IS NOT NULL
+WITH g.name AS genre, avg(m.imdbRating) AS avg_rating
+RETURN genre, avg_rating
+ORDER BY avg_rating DESC
+LIMIT 1
+Final Answer: The genre with the highest average IMDb rating is Documentary, with an average rating of approximately 7.54. This result is based on the aggregation of all movies labeled with the Documentary genre and their respective IMDb ratings in the database.
+
+================================================
+
+5.)
+Question: What are the most expensive movies (by budget) from the 1990s?
+Model: openai:gpt-4.1
+Available Tools: ['get_neo4j_schema', 'read_neo4j_cypher', 'find_movie_recommendations']
+Number of Messages: 6
+Number of LLM Calls: 3
+Number of Tool Calls: 2
+Called Tools: get_neo4j_schema-{}, read_neo4j_cypher-{'query': 'MATCH (m:Movie)\nWHERE m.year >= 1990 AND m.year < 2000 AND m.budget IS NOT NULL\nRETURN m.title AS title, m.year AS year, m.budget AS budget\nORDER BY m.budget DESC\nLIMIT 10'}
+Text2Cypher Queries:
+1.)
+MATCH (m:Movie)
+WHERE m.year >= 1990 AND m.year < 2000 AND m.budget IS NOT NULL
+RETURN m.title AS title, m.year AS year, m.budget AS budget
+ORDER BY m.budget DESC
+LIMIT 10
+Final Answer: The most expensive movies (by budget) from the 1990s are:
+
+1. Titanic (1997) – $200,000,000
+2. Waterworld (1995) – $175,000,000
+3. Wild Wild West (1999) – $170,000,000
+4. Speed 2: Cruise Control (1997) – $160,000,000
+5. The 13th Warrior (1999) – $160,000,000
+6. Armageddon (1998) – $140,000,000
+7. Lethal Weapon 4 (1998) – $140,000,000
+8. The World Is Not Enough (1999) – $135,000,000
+9. Stuart Little (1999) – $133,000,000
+10. Godzilla (1998) – $130,000,000
+
+These figures are based on the movie database’s recorded budgets for that decade. Titanic stands out as the most expensive, famously pushing cinematic technology and scale at the time. (Source: database query on Movie nodes, sorted by budget).
+
+================================================
+
+6.)
+Question: Which users have rated the most movies?
+Model: openai:gpt-4.1
+Available Tools: ['get_neo4j_schema', 'read_neo4j_cypher', 'find_movie_recommendations']
+Number of Messages: 6
+Number of LLM Calls: 3
+Number of Tool Calls: 2
+Called Tools: get_neo4j_schema-{}, read_neo4j_cypher-{'query': 'MATCH (u:User)-[r:RATED]->(m:Movie)\nWITH u, count(r) AS num_ratings\nORDER BY num_ratings DESC\nRETURN u.userId AS userId, u.name AS name, num_ratings\nLIMIT 10'}
+Text2Cypher Queries:
+1.)
+MATCH (u:User)-[r:RATED]->(m:Movie)
+WITH u, count(r) AS num_ratings
+ORDER BY num_ratings DESC
+RETURN u.userId AS userId, u.name AS name, num_ratings
+LIMIT 10
+Final Answer: The users who have rated the most movies are:
+
+1. Darlene Garcia (User ID: 547) – 2,391 ratings
+2. Robert Brooks (User ID: 564) – 1,868 ratings
+3. Karen Avila (User ID: 624) – 1,735 ratings
+4. Angela Garcia (User ID: 15) – 1,700 ratings
+5. Angela Robertson (User ID: 73) – 1,610 ratings
+6. Larry Boyd (User ID: 452) – 1,340 ratings
+7. Rita Owens (User ID: 468) – 1,291 ratings
+8. Thomas Swanson (User ID: 380) – 1,063 ratings
+9. Marissa Choi (User ID: 311) – 1,019 ratings
+10. Aaron Castro (User ID: 30) – 1,011 ratings
+
+These figures are based on aggregating ratings (the RATED relationship) between users and movies in the database.
+
+================================================
+
+7.)
+Question: What movies have both 'Action' and 'Drama' genres?
+Model: openai:gpt-4.1
+Available Tools: ['get_neo4j_schema', 'read_neo4j_cypher', 'find_movie_recommendations']
+Number of Messages: 6
+Number of LLM Calls: 3
+Number of Tool Calls: 2
+Called Tools: get_neo4j_schema-{}, read_neo4j_cypher-{'query': "MATCH (m:Movie)-[:IN_GENRE]->(g1:Genre {name: 'Action'})\nMATCH (m)-[:IN_GENRE]->(g2:Genre {name: 'Drama'})\nRETURN m.title AS title, m.year AS year\nORDER BY m.year DESC"}
+Text2Cypher Queries:
+1.)
+MATCH (m:Movie)-[:IN_GENRE]->(g1:Genre {name: 'Action'})
+MATCH (m)-[:IN_GENRE]->(g2:Genre {name: 'Drama'})
+RETURN m.title AS title, m.year AS year
+ORDER BY m.year DESC
+Final Answer: Here are movies that have both 'Action' and 'Drama' genres, based on the database:
+
+Recent Examples (2010s–2016):
+- The Huntsman Winter's War (2016)
+- I Am Wrath (2016)
+- Southpaw (2015)
+- San Andreas (2015)
+- Run All Night (2015)
+- Kidnapping Mr. Heineken (2015)
+- Sword of Vengeance (2015)
+- Blackhat (2015)
+- Jurassic World (2015)
+- Kite (2014)
+- Son of a Gun (2014)
+- Wicked Blood (2014)
+- Exodus: Gods and Kings (2014)
+- Fury (2014)
+- A Most Violent Year (2014)
+- Water Diviner, The (2014)
+- Dracula Untold (2014)
+- Rush (2013)
+- Mortal Instruments: City of Bones, The (2013)
+- World War Z (2013)
+- Lone Survivor (2013)
+- Snowpiercer (2013)
+- Zero Dark Thirty (2012)
+- Django Unchained (2012)
+- The Hunger Games (2012)
+- Immortals (2011)
+- Harry Potter and the Deathly Hallows: Part 2 (2011)
+- Rise of the Planet of the Apes (2011)
+- Thor (2011)
+- Inception (2010)
+- Karate Kid, The (2010)
+- Clash of the Titans (2010)
+
+Classic/Notable Examples:
+- The Dark Knight (2008)
+- Taken (2008)
+- Watchmen (2009)
+- Gladiator (2000)
+- Fight Club (1999)
+- Saving Private Ryan (1998)
+- Braveheart (1995)
+- Léon: The Professional (1994)
+- Romper Stomper (1992)
+- Hard-Boiled (1992)
+- Apocalypse Now (1979)
+- Ben-Hur (1959)
+- Seven Samurai (1954)
+
+This list covers a wide range from recent thrillers and franchise entries like Jurassic World and The Hunger Games, to classics and Oscar winners like Gladiator, Braveheart, and Seven Samurai. These films are connected by their blend of intense action sequences and strong dramatic storytelling. All data is derived from the underlying Neo4j movie database. If you have a specific decade or sub-genre, I can filter further.
+
+================================================
+
+8.)
+Question: What are the current box office earnings for movies released this week?
+Model: openai:gpt-4.1
+Available Tools: ['get_neo4j_schema', 'read_neo4j_cypher', 'find_movie_recommendations']
+Number of Messages: 6
+Number of LLM Calls: 3
+Number of Tool Calls: 2
+Called Tools: get_neo4j_schema-{}, read_neo4j_cypher-{'query': "MATCH (m:Movie)\nWHERE m.released IS NOT NULL\n  AND date(m.released) >= date() - duration('P7D')\n  AND m.revenue IS NOT NULL\nRETURN m.title AS title, m.released AS released, m.revenue AS box_office_earnings\nORDER BY m.released DESC"}
+Text2Cypher Queries:
+1.)
+MATCH (m:Movie)
+WHERE m.released IS NOT NULL
+  AND date(m.released) >= date() - duration('P7D')
+  AND m.revenue IS NOT NULL
+RETURN m.title AS title, m.released AS released, m.revenue AS box_office_earnings
+ORDER BY m.released DESC
+Final Answer: There are no movies in the database with recorded box office earnings (revenue) that were released this week. If you have another time frame in mind or need information about recently released movies in general, please let me know!
+
+================================================
+
+9.)
+Question: Which streaming platforms have the rights to stream each movie?
+Model: openai:gpt-4.1
+Available Tools: ['get_neo4j_schema', 'read_neo4j_cypher', 'find_movie_recommendations']
+Number of Messages: 4
+Number of LLM Calls: 2
+Number of Tool Calls: 1
+Called Tools: get_neo4j_schema-{}
+Final Answer: Based on the database schema, there is no information or relationship available that indicates which streaming platforms have the rights to stream each movie. The schema contains information about movies, actors, directors, genres, user ratings, and some basic movie metadata, but it does not include any node or property related to streaming platforms or their licensing rights.
+
+If you have access to additional data or a specific structure for streaming platforms, please provide the details or update the database so I can assist you further.
+
+================================================
+
+10.)
+Question: What are the detailed production costs broken down by department for each movie?
+Model: openai:gpt-4.1
+Available Tools: ['get_neo4j_schema', 'read_neo4j_cypher', 'find_movie_recommendations']
+Number of Messages: 4
+Number of LLM Calls: 2
+Number of Tool Calls: 1
+Called Tools: get_neo4j_schema-{}
+Final Answer: Based on the schema of the movie database, there are no nodes or relationships indicating detailed production costs broken down by department for each movie. The only related property is the overall "budget" on the Movie node, but there are no department-level production cost breakdowns available in the current database structure.
+
+If you are looking for the overall budget of each movie, I can provide that information. However, breakdowns by department (like art, camera, departmental costs, etc.) are not available according to the database schema. If you need those specifics, you might consider supplementing with external data or clarifying if there is another way you would like to approach movie cost analysis.
+
+================================================
+
