@@ -217,11 +217,13 @@ async def main():
             allowed_tools.append(find_movie_recommendations_tool)
 
             prompt = get_movies_system_prompt()
-            
+
             model = "openai:gpt-4.1"
             batch_size = 10
 
-            eval_results = await _evaluate_batches(questions, prompt, allowed_tools, model, batch_size)
+            eval_results = await _evaluate_batches(
+                questions, prompt, allowed_tools, model, batch_size
+            )
 
             df = pd.DataFrame(eval_results)
 
