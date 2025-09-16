@@ -1,0 +1,42 @@
+questions:
+  # IN-SCOPE QUESTIONS - These can be answered using the available data
+  - question: "What are the top 5 highest-rated movies by IMDb rating?"
+    answer: "1. Band of Brothers (9.6), 2. Civil War, The (9.5), 3. Cosmos (9.3), 4. Shawshank Redemption, The (9.3), 5. Decalogue, The (Dekalog) (9.2)"
+    id: "top_rated_movies"
+
+  - question: "Which actors have appeared in the most movies?"
+    answer: "1. Robert De Niro (56 movies), 2. Bruce Willis (49 movies), 3. Samuel L. Jackson (45 movies), 4. Nicolas Cage (45 movies), 5. Clint Eastwood (40 movies)"
+    id: "most_prolific_actors"
+
+  - question: "What movies did Tom Hanks direct and act in?"
+    answer: "Larry Crowne (2011) - Tom Hanks both directed and starred in this romantic comedy film."
+    id: "actor_director_same_movie"
+
+  - question: "Which genre has the highest average IMDb rating?"
+    answer: "Documentary has the highest average IMDb rating at 7.54, followed by Film-Noir (7.46), War (7.26), Animation (7.12), and Drama (7.01)."
+    id: "best_genre_by_rating"
+
+  - question: "What are the most expensive movies (by budget) from the 1990s?"
+    answer: "1. Titanic (1997) - $200M, 2. Waterworld (1995) - $175M, 3. Wild Wild West (1999) - $170M, 4. Speed 2: Cruise Control (1997) - $160M, 5. 13th Warrior, The (1999) - $160M"
+    id: "expensive_90s_movies"
+
+  - question: "Which users have rated the most movies?"
+    answer: "1. Darlene Garcia (2,391 ratings), 2. Robert Brooks (1,868 ratings), 3. Karen Avila (1,735 ratings), 4. Angela Garcia (1,700 ratings), 5. Angela Robertson (1,610 ratings)"
+    id: "most_active_users"
+
+  - question: "What movies have both 'Action' and 'Drama' genres?"
+    answer: "Examples include: 2012, 24: Redemption, 300: Rise of an Empire, 3:10 to Yuma, 48 Hrs., A Most Violent Year, Abduction, Above the Law, and many others (hundreds of movies have both genres)."
+    id: "action_drama_movies"
+
+  # OUT-OF-SCOPE QUESTIONS - These cannot be answered with the available data
+  - question: "What are the current box office earnings for movies released this week?"
+    answer: "Cannot be answered - database lacks real-time box office data and current release information."
+    id: "current_box_office"
+
+  - question: "Which streaming platforms have the rights to stream each movie?"
+    answer: "Cannot be answered - database has no streaming platform or licensing information."
+    id: "streaming_platforms"
+
+  - question: "What are the detailed production costs broken down by department for each movie?"
+    answer: "Cannot be answered - database only has total budget, not detailed production cost breakdowns."
+    id: "production_cost_breakdown"
