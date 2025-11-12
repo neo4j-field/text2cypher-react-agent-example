@@ -10,10 +10,18 @@ from dotenv import load_dotenv
 from langchain_core.messages import AIMessage
 from langchain_core.tools import StructuredTool
 from langchain_mcp_adapters.tools import load_mcp_tools
+from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.prebuilt import create_react_agent
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+from ragas.metrics.collections import RougeScore
+from ragas.metrics._factual_correctness import FactualCorrectness
+from ragas.dataset_schema import SingleTurnSample
+from openai import AsyncOpenAI
+from ragas.llms import llm_factory
+from ragas.embeddings.base import embedding_factory
+from ragas.metrics.collections import AnswerRelevancy
 
 from evals.models import QuestionRecord, ResponseTableRecord
 from prompt import get_movies_system_prompt
@@ -39,6 +47,23 @@ neo4j_cypher_mcp = StdioServerParameters(
 evals_loc = "evals/output/"
 eval_results = list()
 
+# we will use this LLM as a judge in our evaluations that don't require structured output
+evaluator_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+
+# Setup LLM and embeddings for answer relevancy - this eval requires structured output from the evaluator LLM
+client = AsyncOpenAI()
+evaluator_llm_structured_output = llm_factory("gpt-4o-mini", client=client)
+embeddings = embedding_factory("openai", model="text-embedding-3-small", client=client, interface="modern")
+
+# https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/traditional/#rouge-score
+rouge_scorer = RougeScore(rouge_type="rougeL", mode="fmeasure")
+
+# https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/factual_correctness/#factual-correctness
+factual_correctness_scorer = FactualCorrectness(llm=evaluator_llm, mode="F1", atomicity="high", coverage="high")
+
+# https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/answer_relevance/#answer-relevancy
+answer_relevancy_scorer = AnswerRelevancy(llm=evaluator_llm_structured_output, embeddings=embeddings)
+
 
 async def evaluate_single_question(
     question_dict: dict[str, str],
@@ -49,6 +74,7 @@ async def evaluate_single_question(
     """
     Initialize a fresh agent and evaluate a single question.
     """
+    print(f"\nEvaluating question: {question_dict.get('question')}\n")
     try:
         assert question_dict.get("question") is not None, "Question not found"
 
@@ -81,6 +107,17 @@ async def evaluate_single_question(
         # capture all text2cypher queries
         cyphers = [c.get("args") for c in tool_calls if c.get("name") == "read_neo4j_cypher"]
 
+        rouge_score = await rouge_scorer.ascore(reference=question_dict.get("answer"), response=response["messages"][-1].content)
+
+        sample = SingleTurnSample(
+            response=response["messages"][-1].content,
+            reference=question_dict.get("answer"),
+        )
+        # we have to use the SingleTurnSample for factual correctness
+        factual_correctness_score = await factual_correctness_scorer.single_turn_ascore(sample)
+        
+        answer_relevancy_score = await answer_relevancy_scorer.ascore(user_input=question_dict.get("question"), response=response["messages"][-1].content)
+
         return ResponseTableRecord(
             question_id=question_dict.get("id"),
             question=question_dict.get("question"),
@@ -95,6 +132,9 @@ async def evaluate_single_question(
             num_tool_calls=len(tool_calls),
             response_time=response_time,
             error=None,
+            rouge_score=rouge_score.value,
+            factual_correctness_score=factual_correctness_score,
+            answer_relevancy_score=answer_relevancy_score.value,
         )
 
     except Exception as e:
@@ -113,6 +153,9 @@ async def evaluate_single_question(
             num_tool_calls=None,
             response_time=None,
             error=str(e),
+            rouge_score=None,
+            factual_correctness_score=None,
+            answer_relevancy_score=None,
         )
 
 
@@ -150,7 +193,7 @@ async def _evaluate_batches(
     batch_size: int = 10,
 ) -> list[ResponseTableRecord]:
     """
-    Create embeddings for a Pandas DataFrame of text chunks in batches.
+    Evaluate questions in batches.
 
     Parameters
     ----------
@@ -191,7 +234,7 @@ async def _evaluate_batches(
 
 async def main():
     """
-    Main function to run the agent.
+    Main function to run the agent evaluation.
 
     Based on the documentation:
     https://github.com/langchain-ai/langchain-mcp-adapters?tab=readme-ov-file#client
@@ -219,7 +262,7 @@ async def main():
             prompt = get_movies_system_prompt()
 
             model = "openai:gpt-4.1"
-            batch_size = 10
+            batch_size = 1
 
             eval_results = await _evaluate_batches(
                 questions, prompt, allowed_tools, model, batch_size
