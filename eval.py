@@ -12,16 +12,16 @@ from langchain_core.tools import StructuredTool
 from langchain_mcp_adapters.tools import load_mcp_tools
 from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import create_react_agent
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-from ragas.metrics.collections import RougeScore
-from ragas.metrics._factual_correctness import FactualCorrectness
-from ragas.dataset_schema import SingleTurnSample
 from openai import AsyncOpenAI
-from ragas.llms import llm_factory
+from ragas.dataset_schema import SingleTurnSample
 from ragas.embeddings.base import embedding_factory
-from ragas.metrics.collections import AnswerRelevancy
+from ragas.llms import llm_factory
+from ragas.metrics._factual_correctness import FactualCorrectness
+from ragas.metrics.collections import AnswerRelevancy, RougeScore
 
 from evals.models import QuestionRecord, ResponseTableRecord
 from prompt import get_movies_system_prompt
@@ -53,43 +53,43 @@ evaluator_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 # Setup LLM and embeddings for answer relevancy - this eval requires structured output from the evaluator LLM
 client = AsyncOpenAI()
 evaluator_llm_structured_output = llm_factory("gpt-4o-mini", client=client)
-embeddings = embedding_factory("openai", model="text-embedding-3-small", client=client, interface="modern")
+embeddings = embedding_factory(
+    "openai", model="text-embedding-3-small", client=client, interface="modern"
+)
 
 # https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/traditional/#rouge-score
+# look at the longest common subsequence between the reference and the response
+# use F1 score to measure the quality of the match
 rouge_scorer = RougeScore(rouge_type="rougeL", mode="fmeasure")
 
 # https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/factual_correctness/#factual-correctness
-factual_correctness_scorer = FactualCorrectness(llm=evaluator_llm, mode="F1", atomicity="high", coverage="high")
+factual_correctness_scorer = FactualCorrectness(
+    llm=evaluator_llm, mode="F1", atomicity="high", coverage="high"
+)
 
 # https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/answer_relevance/#answer-relevancy
-answer_relevancy_scorer = AnswerRelevancy(llm=evaluator_llm_structured_output, embeddings=embeddings)
+answer_relevancy_scorer = AnswerRelevancy(
+    llm=evaluator_llm_structured_output, embeddings=embeddings
+)
 
 
 async def evaluate_single_question(
+    agent: CompiledStateGraph,
     question_dict: dict[str, str],
-    prompt: str,
     tools: list[StructuredTool],
     model: str = "openai:gpt-4.1",
 ) -> ResponseTableRecord:
     """
-    Initialize a fresh agent and evaluate a single question.
+    Evaluate a single question in a new conversation thread.
     """
-    print(f"\nEvaluating question: {question_dict.get('question')}\n")
     try:
         assert question_dict.get("question") is not None, "Question not found"
 
         # create the thread id for the agent eval
         # use the question id if it exists, otherwise generate a random uuid
+        # each question must have it's own thread id, so that we maintain 1 unique conversation thread per question
         thread_id = "eval-" + question_dict.get("id", str(uuid4()))
         config = {"configurable": {"thread_id": thread_id}}
-
-        agent = create_react_agent(
-            model=model,
-            pre_model_hook=pre_model_hook,
-            checkpointer=InMemorySaver(),
-            tools=tools,
-            prompt=prompt,
-        )
 
         response_time_start = perf_counter()
         response = await agent.ainvoke({"messages": question_dict["question"]}, config=config)
@@ -107,7 +107,9 @@ async def evaluate_single_question(
         # capture all text2cypher queries
         cyphers = [c.get("args") for c in tool_calls if c.get("name") == "read_neo4j_cypher"]
 
-        rouge_score = await rouge_scorer.ascore(reference=question_dict.get("answer"), response=response["messages"][-1].content)
+        rouge_score = await rouge_scorer.ascore(
+            reference=question_dict.get("answer"), response=response["messages"][-1].content
+        )
 
         sample = SingleTurnSample(
             response=response["messages"][-1].content,
@@ -115,9 +117,12 @@ async def evaluate_single_question(
         )
         # we have to use the SingleTurnSample for factual correctness
         factual_correctness_score = await factual_correctness_scorer.single_turn_ascore(sample)
-        
-        answer_relevancy_score = await answer_relevancy_scorer.ascore(user_input=question_dict.get("question"), response=response["messages"][-1].content)
 
+        answer_relevancy_score = await answer_relevancy_scorer.ascore(
+            user_input=question_dict.get("question"), response=response["messages"][-1].content
+        )
+
+        print(f"Completed evaluation for question: {question_dict.get('question')}")
         return ResponseTableRecord(
             question_id=question_dict.get("id"),
             question=question_dict.get("question"),
@@ -132,8 +137,8 @@ async def evaluate_single_question(
             num_tool_calls=len(tool_calls),
             response_time=response_time,
             error=None,
-            rouge_score=rouge_score.value,
-            factual_correctness_score=factual_correctness_score,
+            rouge_f1_score=rouge_score.value,
+            factual_correctness_f1_score=factual_correctness_score,
             answer_relevancy_score=answer_relevancy_score.value,
         )
 
@@ -153,13 +158,14 @@ async def evaluate_single_question(
             num_tool_calls=None,
             response_time=None,
             error=str(e),
-            rouge_score=None,
-            factual_correctness_score=None,
+            rouge_f1_score=None,
+            factual_correctness_f1_score=None,
             answer_relevancy_score=None,
         )
 
 
 async def _evaluate_single_batch(
+    agent: CompiledStateGraph,
     batch: list[QuestionRecord],
     prompt: str,
     tools: list[StructuredTool],
@@ -180,12 +186,13 @@ async def _evaluate_single_batch(
     """
 
     tasks = [
-        evaluate_single_question(question_dict, prompt, tools, model) for question_dict in batch
+        evaluate_single_question(agent, question_dict, tools, model) for question_dict in batch
     ]
     return await asyncio.gather(*tasks)
 
 
 async def _evaluate_batches(
+    agent: CompiledStateGraph,
     questions: list[QuestionRecord],
     prompt: str,
     tools: list[StructuredTool],
@@ -224,7 +231,7 @@ async def _evaluate_batches(
             batch = questions[i:]
         else:
             batch = questions[i : i + batch_size]
-        batch_results = await _evaluate_single_batch(batch, prompt, tools, model)
+        batch_results = await _evaluate_single_batch(agent, batch, prompt, tools, model)
 
         # Add extracted records to the results list
         results.extend(batch_results)
@@ -262,10 +269,18 @@ async def main():
             prompt = get_movies_system_prompt()
 
             model = "openai:gpt-4.1"
-            batch_size = 1
+            batch_size = 5
+
+            agent = create_react_agent(
+                model=model,
+                pre_model_hook=pre_model_hook,
+                checkpointer=InMemorySaver(),
+                tools=allowed_tools,
+                prompt=prompt,
+            )
 
             eval_results = await _evaluate_batches(
-                questions, prompt, allowed_tools, model, batch_size
+                agent, questions, prompt, allowed_tools, model, batch_size
             )
 
             df = pd.DataFrame(eval_results)
