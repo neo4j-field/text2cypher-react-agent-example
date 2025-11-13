@@ -22,6 +22,9 @@ class ResponseTableRecord(TypedDict):
     num_tool_calls: Optional[int]
     response_time: Optional[float]
     error: Optional[str]
+    rouge_f1_score: Optional[float]
+    factual_correctness_f1_score: Optional[float]
+    answer_relevancy_score: Optional[float]
 
 
 class QuestionRecord(TypedDict):
