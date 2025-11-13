@@ -175,9 +175,9 @@ The resulting evaluation CSV contains the following columns:
 * `error`: Optional[str] - Error message if evaluation failed
 
 **RAGAS Quality Metrics:**
-* `rouge_f1_score`: Optional[float] - Rouge-L F1 score (0-1)
-* `factual_correctness_f1_score`: Optional[float] - Factual correctness F1 score (0-1)
-* `answer_relevancy_score`: Optional[float] - Answer relevancy score (0-1)
+* `rouge_f1_score`: Optional[float] - Rouge-L F1 score
+* `factual_correctness_f1_score`: Optional[float] - Factual correctness F1 score
+* `answer_relevancy_score`: Optional[float] - Answer relevancy score
 
 ## Development
 
