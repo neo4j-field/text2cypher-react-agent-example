@@ -14,8 +14,6 @@ dependencies = [
     "openai>=1.99.5",
     "pandas>=2.3.2",
     "pydantic>=2.11.7",
-    "ragas>=0.3.9",
-    "rouge-score>=0.1.2",
 ]
 
 [dependency-groups]

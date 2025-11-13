@@ -1,4 +1,4 @@
-# Neo4j ReAct Agent Example
+# Text2Cypher ReAct Agent Example
 
 This repo provides a simple example of how to build a ReAct agent with MCP and local tools. 
 
@@ -122,62 +122,35 @@ To exit the agent, type any of:
 
 ## Evaluation
 
-This repo contains a comprehensive local evaluation suite with [RAGAS](https://docs.ragas.io/) metrics for measuring agent performance. The evaluation system can be used and extended to evaluate your own agents.
-
-### Evaluation Metrics
-
-The evaluation suite includes three RAGAS metrics:
-
-1. **[Rouge Score](https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/traditional/#rouge-score)** - Measures the longest common subsequence between the reference answer and agent response using F1 score
-2. **[Factual Correctness](https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/factual_correctness/#factual-correctness)** - Uses an LLM judge to evaluate the factual accuracy of the agent's response against the reference answer with high atomicity and coverage
-3. **[Answer Relevancy](https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/answer_relevance/#answer-relevancy)** - Measures how relevant the agent's response is to the user's question using embeddings
+This repo also contains a simple local evaluation suite. This may be used and extended to evaluate your own agents. 
 
 ### Running Evaluations
 
-1. Configure the [eval.py](eval.py) file with the LLM name, tools and prompt you would like to use
+To run 
+1. Configure the `eval.py` file with the LLM name, tools and prompt you would like to use 
 2. Ensure you have populated the `questions.yaml` file with your eval question set
-3. Run evaluations:
-   ```bash
-   make run-eval-uv  # Using uv
-   # or
-   make run-eval     # Using pip
-   ```
-4. The eval results CSV will be saved to `evals/output/eval_benchmark_results_<timestamp>.csv`
-5. View and analyze the results with [review.ipynb](review.ipynb)
-6. Generate a text report:
-   ```bash
-   make generate-report-uv csv-name=<file-name>  # Using uv
-   # or
-   make generate-report csv-name=<file-name>     # Using pip
-   ```
+3. Run `make run-eval-uv` or `make run-eval` depending on your package manager
+4. The eval results CSV will be saved to `evals/output/<file-name>.csv`
+5. View the contents with `review.ipynb`
+6. Generate a `.txt` report with `make generate-report-uv csv-name=<file-name>` or `make generate-report csv-name=<file-name>` depending on your package manager
 
-**NOTE**: The evaluation script may take awhile to run depending on the number of questions and length of resulting conversations
+### Eval CSV Structure 
 
-### Eval CSV Structure
+The resulting evaluation CSV will contain the following columns:
 
-The resulting evaluation CSV contains the following columns:
-
-**Question & Answer Data:**
-* `question_id`: str - Unique identifier for the question
-* `question`: str - The user's input question
-* `expected_answer`: str - Reference answer for comparison
-* `agent_final_answer`: Optional[str] - The agent's response
-
-**Agent Performance Metrics:**
-* `generated_cypher`: list[ReadNeo4jCypherToolInput] - All Cypher queries generated
-* `model`: str - LLM model used
-* `available_tools`: list[str] - Tools available to the agent
-* `called_tools`: list[str] - Tools actually invoked
-* `num_messages`: Optional[int] - Total messages in conversation
-* `num_llm_calls`: Optional[int] - Number of LLM invocations
-* `num_tool_calls`: Optional[int] - Number of tool invocations
-* `response_time`: Optional[float] - Time to complete question (seconds)
-* `error`: Optional[str] - Error message if evaluation failed
-
-**RAGAS Quality Metrics:**
-* `rouge_f1_score`: Optional[float] - Rouge-L F1 score
-* `factual_correctness_f1_score`: Optional[float] - Factual correctness F1 score
-* `answer_relevancy_score`: Optional[float] - Answer relevancy score
+* question_id: str
+* question: str
+* expected_answer: str
+* agent_final_answer: Optional[str]
+* generated_cypher: list[ReadNeo4jCypherToolInput]
+* model: str
+* available_tools: list[str]
+* called_tools: list[str]
+* num_messages: Optional[int]
+* num_llm_calls: Optional[int]
+* num_tool_calls: Optional[int]
+* response_time: Optional[float]
+* error: Optional[str]
 
 ## Development
 
@@ -198,11 +171,6 @@ make format
 - `neo4j` - Neo4j Python driver
 - `openai` - OpenAI API client
 - `pydantic` - Data validation
-
-**Evaluation Libraries:**
-- `ragas` - RAG & agent assessment metrics framework
-- `rouge-score` - Text similarity metrics
-- `pandas` - Data analysis and CSV handling
 
 **Development:**
 - `ruff` - Code formatting and linting
