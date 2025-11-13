@@ -200,7 +200,7 @@ make format
 - `pydantic` - Data validation
 
 **Evaluation Libraries:**
-- `ragas` - RAG assessment metrics framework
+- `ragas` - RAG & agent assessment metrics framework
 - `rouge-score` - Text similarity metrics
 - `pandas` - Data analysis and CSV handling
 
