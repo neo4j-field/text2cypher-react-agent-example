@@ -151,6 +151,8 @@ The evaluation suite includes three RAGAS metrics:
    make generate-report csv-name=<file-name>     # Using pip
    ```
 
+**NOTE**: The evaluation script may take awhile to run depending on the number of questions and length of resulting conversations
+
 ### Eval CSV Structure
 
 The resulting evaluation CSV contains the following columns:
