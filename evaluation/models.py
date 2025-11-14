@@ -1,0 +1,89 @@
+from typing import Any, Optional, TypedDict
+
+
+class ReadNeo4jCypherToolInput(TypedDict):
+    query: str
+    params: Optional[dict[str, Any]]
+
+
+# class ResponseTableRecord(TypedDict):
+#     "A record created for the response table. The contents of this record may be used for further evaluation."
+
+#     question_id: str
+#     question: str
+#     expected_answer: str
+#     agent_final_answer: Optional[str]
+#     generated_cypher: list[ReadNeo4jCypherToolInput]
+#     model: str
+#     available_tools: list[str]
+#     called_tools: list[str]
+#     num_messages: Optional[int]
+#     num_llm_calls: Optional[int]
+#     num_tool_calls: Optional[int]
+#     response_time: Optional[float]
+#     error: Optional[str]
+#     rouge_f1_score: Optional[float]
+#     factual_correctness_f1_score: Optional[float]
+#     answer_relevancy_score: Optional[float]
+
+
+class MetadataTableRecord(TypedDict):
+    "A record created for the metadata table."
+
+    question_id: str
+    question: str
+    expected_answer: str
+    agent_final_answer: Optional[str]
+    generated_cypher: list[ReadNeo4jCypherToolInput]
+    model: str
+    available_tools: list[str]
+    called_tools: list[str]
+    num_messages: Optional[int]
+    num_llm_calls: Optional[int]
+    num_tool_calls: Optional[int]
+    response_time: Optional[float]
+    error: Optional[str]
+
+
+class AgentResponseTableRecord(TypedDict):
+    "A record created for the agent response evaluation table."
+
+    question_id: str
+    question: str
+    expected_answer: str
+    agent_final_answer: str
+    model: str
+    rouge_f1_score: Optional[float]
+    factual_correctness_f1_score: Optional[float]
+    answer_relevancy_score: Optional[float]
+    error: Optional[str]
+
+
+class RetrievalTableRecord(TypedDict):
+    "A record created for the retrieval evaluation table."
+
+    question_id: str
+    question: str
+    expected_answer: str
+    agent_final_answer: str
+    model: str
+    tool_name: str
+    tool_args: dict[str, Any]
+    tool_output: Any
+    error: Optional[str]
+
+
+class FailedResponseTableRecord(TypedDict):
+    "A record created for the failed response evaluation table."
+
+    question_id: str
+    question: str
+    expected_answer: str
+    error: str
+
+class QuestionRecord(TypedDict):
+    "A record read from the questions yaml file."
+
+    id: Optional[str]
+    question: str
+    answer: Optional[str]

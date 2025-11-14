@@ -1,0 +1,25 @@
+question_id,question,expected_answer,agent_final_answer,model,rouge_f1_score,factual_correctness_f1_score,answer_relevancy_score,error
+actor_director_same_movie,What movies did Tom Hanks direct and act in?,Larry Crowne (2011) - Tom Hanks both directed and starred in this romantic comedy film.,"Tom Hanks both directed and acted in the movie Larry Crowne (2011). This film is a romantic comedy in which Hanks stars alongside Julia Roberts, and he also took on the role of director (Source: movie database, IMDb ID: 1583420).",openai:gpt-4.1,0.33333333333333337,0.8,0.5676500281206347,
+top_rated_movies,What are the top 5 highest-rated movies by IMDb rating?,"1. Band of Brothers (9.6), 2. Civil War, The (9.5), 3. Cosmos (9.3), 4. Shawshank Redemption, The (9.3), 5. Decalogue, The (Dekalog) (9.2)","The top 5 highest-rated movies by IMDb rating in the database are:
+
+1. Band of Brothers – IMDb Rating: 9.6
+2. The Civil War – IMDb Rating: 9.5
+3. Cosmos – IMDb Rating: 9.3
+4. The Shawshank Redemption – IMDb Rating: 9.3
+5. The Decalogue (Dekalog) – IMDb Rating: 9.2
+
+These ratings are based on the IMDb scores recorded for each movie in the database.",openai:gpt-4.1,0.5319148936170213,0.91,0.9999999999999997,
+most_prolific_actors,Which actors have appeared in the most movies?,"1. Robert De Niro (56 movies), 2. Bruce Willis (49 movies), 3. Samuel L. Jackson (45 movies), 4. Nicolas Cage (45 movies), 5. Clint Eastwood (40 movies)","The actors who have appeared in the most movies in the database are:
+
+1. Robert De Niro – 56 movies
+2. Bruce Willis – 49 movies
+3. Nicolas Cage – 45 movies
+4. Samuel L. Jackson – 45 movies
+5. Michael Caine – 40 movies
+6. Clint Eastwood – 40 movies
+7. John Cusack – 38 movies
+8. John Travolta – 38 movies
+9. Gene Hackman – 38 movies
+10. Tom Hanks – 38 movies
+
+This ranking is based on the number of distinct movie appearances recorded in the database for each actor.",openai:gpt-4.1,0.4,0.71,0.8710309846487387,
