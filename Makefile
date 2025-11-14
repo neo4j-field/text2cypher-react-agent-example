@@ -23,10 +23,10 @@ run-eval:
 	python3 -m evaluation.main
 
 generate-report-uv:
-	uv run python3 scripts/generate_report.py $(csv-name)
+	uv run python3 evaluation/components/generate_report.py $(csv-name)
 
 generate-report:
-	python3 scripts/generate_report.py $(csv-name)
+	python3 evaluation/components/generate_report.py $(csv-name)
 
 help:
 	@echo '----'

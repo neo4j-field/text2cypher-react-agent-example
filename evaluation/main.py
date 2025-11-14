@@ -18,6 +18,7 @@ from mcp.client.stdio import stdio_client
 from evaluation.components.agent import create_agent_response_record
 from evaluation.components.fail import create_failed_response_record
 from evaluation.components.metadata import create_metadata_record
+from evaluation.components.generate_report import create_report_from_dataframes
 from evaluation.models import AgentResponseTableRecord, FailedResponseTableRecord, MetadataTableRecord, QuestionRecord
 from prompt import get_movies_system_prompt
 from tools.find_movie_recommendations import find_movie_recommendations_tool
@@ -208,7 +209,7 @@ async def main():
     https://github.com/langchain-ai/langchain-mcp-adapters?tab=readme-ov-file#client
     """
 
-    questions = get_questions_from_yaml("questions.yaml")[:3]
+    questions = get_questions_from_yaml("questions.yaml")
     print(f"Retrieved {len(questions)} questions for evaluation.")
 
     metadata_records = list()
@@ -255,8 +256,9 @@ async def main():
                 batch_size,
             )
 
-            directory = (
-                f"{evals_loc}eval_run_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
+            timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            directory = (   
+                f"{evals_loc}eval_run_{timestamp}"
             )
 
             os.makedirs(directory, exist_ok=True)
@@ -279,6 +281,16 @@ async def main():
                 f"{directory}/failed_response.csv",
                 index=False,
             )
+
+            report = create_report_from_dataframes(
+                title=f"Evaluation Report {timestamp}",
+                agent_response_df=agent_response_df,
+                metadata_df=metadata_df,
+                failed_response_df=failed_response_df,
+            )
+
+            with open(f"{directory}/report.txt", "w") as f:
+                f.write(report)
 
 
 if __name__ == "__main__":
