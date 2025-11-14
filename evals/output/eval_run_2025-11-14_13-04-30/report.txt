@@ -1,0 +1,102 @@
+Evaluation Report 2025-11-14_13-04-30
+
+Total Questions: 3
+Total Failed Questions: 0
+
+================================================
+1.)
+Question: What movies did Tom Hanks direct and act in?
+Model: openai:gpt-4.1
+Available Tools: [StructuredTool(name='get_neo4j_schema', description='List all nodes, their attributes and their relationships to other nodes in the neo4j database.\nThis requires that the APOC plugin is installed and enabled.', args_schema={'properties': {}, 'type': 'object'}, metadata={'title': 'Get Neo4j Schema', 'readOnlyHint': True, 'destructiveHint': False, 'idempotentHint': True, 'openWorldHint': True}, response_format='content_and_artifact', coroutine=<function convert_mcp_tool_to_langchain_tool.<locals>.call_tool at 0x1344abe20>), StructuredTool(name='read_neo4j_cypher', description='Execute a read Cypher query on the neo4j database.', args_schema={'properties': {'query': {'description': 'The Cypher query to execute.', 'type': 'string'}, 'params': {'additionalProperties': True, 'default': {}, 'description': 'The parameters to pass to the Cypher query.', 'type': 'object'}}, 'required': ['query'], 'type': 'object'}, metadata={'title': 'Read Neo4j Cypher', 'readOnlyHint': True, 'destructiveHint': False, 'idempotentHint': True, 'openWorldHint': True}, response_format='content_and_artifact', coroutine=<function convert_mcp_tool_to_langchain_tool.<locals>.call_tool at 0x1344abec0>), StructuredTool(name='find_movie_recommendations', description='Search the database movie recommendations based on movie title and rating criteria.', args_schema=<class 'tools.find_movie_recommendations.FindMovieRecommendationsInput'>, func=<function find_movie_recommendations at 0x132ea8e00>)]
+Number of Messages: 6
+Number of LLM Calls: 3
+Number of Tool Calls: 2
+Called Tools: get_neo4j_schema-{}, read_neo4j_cypher-{'query': "MATCH (a:Actor {name: 'Tom Hanks'})-[:ACTED_IN]->(m:Movie)\nMATCH (a)-[:DIRECTED]->(m)\nRETURN m.title AS title, m.year AS year\nORDER BY m.year"}
+
+Text2Cypher Queries:
+1.)
+MATCH (a:Actor {name: 'Tom Hanks'})-[:ACTED_IN]->(m:Movie)
+MATCH (a)-[:DIRECTED]->(m)
+RETURN m.title AS title, m.year AS year
+ORDER BY m.year
+
+Evaluation Metrics:
+
+Rouge F1 Score: 0.2622950819672131
+Factual Correctness F1 Score: 0.57
+Answer Relevancy Score: 0.5780160191645289
+
+
+Final Answer: Tom Hanks both directed and acted in the movie Larry Crowne (2011). This is the only film where he held both roles, according to the database. If you would like more information about this movie or Tom Hanks's other acting or directing work, let me know!
+
+================================================
+
+2.)
+Question: What are the top 5 highest-rated movies by IMDb rating?
+Model: openai:gpt-4.1
+Available Tools: [StructuredTool(name='get_neo4j_schema', description='List all nodes, their attributes and their relationships to other nodes in the neo4j database.\nThis requires that the APOC plugin is installed and enabled.', args_schema={'properties': {}, 'type': 'object'}, metadata={'title': 'Get Neo4j Schema', 'readOnlyHint': True, 'destructiveHint': False, 'idempotentHint': True, 'openWorldHint': True}, response_format='content_and_artifact', coroutine=<function convert_mcp_tool_to_langchain_tool.<locals>.call_tool at 0x1344abe20>), StructuredTool(name='read_neo4j_cypher', description='Execute a read Cypher query on the neo4j database.', args_schema={'properties': {'query': {'description': 'The Cypher query to execute.', 'type': 'string'}, 'params': {'additionalProperties': True, 'default': {}, 'description': 'The parameters to pass to the Cypher query.', 'type': 'object'}}, 'required': ['query'], 'type': 'object'}, metadata={'title': 'Read Neo4j Cypher', 'readOnlyHint': True, 'destructiveHint': False, 'idempotentHint': True, 'openWorldHint': True}, response_format='content_and_artifact', coroutine=<function convert_mcp_tool_to_langchain_tool.<locals>.call_tool at 0x1344abec0>), StructuredTool(name='find_movie_recommendations', description='Search the database movie recommendations based on movie title and rating criteria.', args_schema=<class 'tools.find_movie_recommendations.FindMovieRecommendationsInput'>, func=<function find_movie_recommendations at 0x132ea8e00>)]
+Number of Messages: 6
+Number of LLM Calls: 3
+Number of Tool Calls: 2
+Called Tools: get_neo4j_schema-{}, read_neo4j_cypher-{'query': 'MATCH (m:Movie) WHERE m.imdbRating IS NOT NULL RETURN m.title AS title, m.imdbRating AS imdbRating, m.year AS year ORDER BY m.imdbRating DESC, m.imdbVotes DESC LIMIT 5'}
+
+Text2Cypher Queries:
+1.)
+MATCH (m:Movie) WHERE m.imdbRating IS NOT NULL RETURN m.title AS title, m.imdbRating AS imdbRating, m.year AS year ORDER BY m.imdbRating DESC, m.imdbVotes DESC LIMIT 5
+
+Evaluation Metrics:
+
+Rouge F1 Score: 0.4329896907216495
+Factual Correctness F1 Score: 0.0
+Answer Relevancy Score: 0.9999994385761889
+
+
+Final Answer: The top 5 highest-rated movies by IMDb rating in the database are:
+
+1. Band of Brothers (2001) – IMDb Rating: 9.6
+2. The Civil War (1990) – IMDb Rating: 9.5
+3. The Shawshank Redemption (1994) – IMDb Rating: 9.3
+4. Cosmos (1980) – IMDb Rating: 9.3
+5. The Godfather (1972) – IMDb Rating: 9.2
+
+These films lead the IMDb charts according to the ratings stored in the database.
+
+================================================
+
+3.)
+Question: Which actors have appeared in the most movies?
+Model: openai:gpt-4.1
+Available Tools: [StructuredTool(name='get_neo4j_schema', description='List all nodes, their attributes and their relationships to other nodes in the neo4j database.\nThis requires that the APOC plugin is installed and enabled.', args_schema={'properties': {}, 'type': 'object'}, metadata={'title': 'Get Neo4j Schema', 'readOnlyHint': True, 'destructiveHint': False, 'idempotentHint': True, 'openWorldHint': True}, response_format='content_and_artifact', coroutine=<function convert_mcp_tool_to_langchain_tool.<locals>.call_tool at 0x1344abe20>), StructuredTool(name='read_neo4j_cypher', description='Execute a read Cypher query on the neo4j database.', args_schema={'properties': {'query': {'description': 'The Cypher query to execute.', 'type': 'string'}, 'params': {'additionalProperties': True, 'default': {}, 'description': 'The parameters to pass to the Cypher query.', 'type': 'object'}}, 'required': ['query'], 'type': 'object'}, metadata={'title': 'Read Neo4j Cypher', 'readOnlyHint': True, 'destructiveHint': False, 'idempotentHint': True, 'openWorldHint': True}, response_format='content_and_artifact', coroutine=<function convert_mcp_tool_to_langchain_tool.<locals>.call_tool at 0x1344abec0>), StructuredTool(name='find_movie_recommendations', description='Search the database movie recommendations based on movie title and rating criteria.', args_schema=<class 'tools.find_movie_recommendations.FindMovieRecommendationsInput'>, func=<function find_movie_recommendations at 0x132ea8e00>)]
+Number of Messages: 6
+Number of LLM Calls: 3
+Number of Tool Calls: 2
+Called Tools: get_neo4j_schema-{}, read_neo4j_cypher-{'query': 'MATCH (a:Actor)-[:ACTED_IN]->(m:Movie) WHERE a.name IS NOT NULL RETURN a.name AS actor, COUNT(m) AS movie_count ORDER BY movie_count DESC LIMIT 10'}
+
+Text2Cypher Queries:
+1.)
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie) WHERE a.name IS NOT NULL RETURN a.name AS actor, COUNT(m) AS movie_count ORDER BY movie_count DESC LIMIT 10
+
+Evaluation Metrics:
+
+Rouge F1 Score: 0.3492063492063492
+Factual Correctness F1 Score: 0.63
+Answer Relevancy Score: 0.8912029751163725
+
+
+Final Answer: The actors who have appeared in the most movies in the database are:
+
+1. Robert De Niro – 56 movies
+2. Bruce Willis – 49 movies
+3. Nicolas Cage – 45 movies
+4. Samuel L. Jackson – 45 movies
+5. Michael Caine – 40 movies
+6. Clint Eastwood – 40 movies
+7. John Cusack – 38 movies
+8. John Travolta – 38 movies
+9. Gene Hackman – 38 movies
+10. Tom Hanks – 38 movies
+
+These figures are based on the movie database schema where actors are connected to movies via the ACTED_IN relationship. Robert De Niro, with 56 films, is the most prolific actor in this dataset.
+
+================================================
+

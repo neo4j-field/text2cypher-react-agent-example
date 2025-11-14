@@ -7,23 +7,19 @@ from uuid import uuid4
 
 import pandas as pd
 from dotenv import load_dotenv
-from langchain_core.messages import AIMessage
 from langchain_core.tools import StructuredTool
 from langchain_mcp_adapters.tools import load_mcp_tools
-from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import create_react_agent
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-from openai import AsyncOpenAI
-from ragas.dataset_schema import SingleTurnSample
-from ragas.embeddings.base import embedding_factory
-from ragas.llms import llm_factory
-from ragas.metrics._factual_correctness import FactualCorrectness
-from ragas.metrics.collections import AnswerRelevancy, RougeScore
 
-from evals.models import QuestionRecord, ResponseTableRecord
+from evaluation.components.agent import create_agent_response_record
+from evaluation.components.fail import create_failed_response_record
+from evaluation.components.metadata import create_metadata_record
+from evaluation.components.generate_report import create_report_from_dataframes
+from evaluation.models import AgentResponseTableRecord, FailedResponseTableRecord, MetadataTableRecord, QuestionRecord
 from prompt import get_movies_system_prompt
 from tools.find_movie_recommendations import find_movie_recommendations_tool
 from utils import get_questions_from_yaml, pre_model_hook
@@ -47,41 +43,20 @@ neo4j_cypher_mcp = StdioServerParameters(
 evals_loc = "evals/output/"
 eval_results = list()
 
-# we will use this LLM as a judge in our evaluations that don't require structured output
-evaluator_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
-
-# Setup LLM and embeddings for answer relevancy - this eval requires structured output from the evaluator LLM
-client = AsyncOpenAI()
-evaluator_llm_structured_output = llm_factory("gpt-4o-mini", client=client)
-embeddings = embedding_factory(
-    "openai", model="text-embedding-3-small", client=client, interface="modern"
-)
-
-# https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/traditional/#rouge-score
-# look at the longest common subsequence between the reference and the response
-# use F1 score to measure the quality of the match
-rouge_scorer = RougeScore(rouge_type="rougeL", mode="fmeasure")
-
-# https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/factual_correctness/#factual-correctness
-factual_correctness_scorer = FactualCorrectness(
-    llm=evaluator_llm, mode="F1", atomicity="high", coverage="high"
-)
-
-# https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/answer_relevance/#answer-relevancy
-answer_relevancy_scorer = AnswerRelevancy(
-    llm=evaluator_llm_structured_output, embeddings=embeddings
-)
-
 
 async def evaluate_single_question(
     agent: CompiledStateGraph,
     question_dict: dict[str, str],
     tools: list[StructuredTool],
+    metadata_records: list[MetadataTableRecord],
+    agent_response_records: list[AgentResponseTableRecord],
+    failed_response_records: list[FailedResponseTableRecord],
     model: str = "openai:gpt-4.1",
-) -> ResponseTableRecord:
+) -> None:
     """
     Evaluate a single question in a new conversation thread.
     """
+
     try:
         assert question_dict.get("question") is not None, "Question not found"
 
@@ -91,77 +66,49 @@ async def evaluate_single_question(
         thread_id = "eval-" + question_dict.get("id", str(uuid4()))
         config = {"configurable": {"thread_id": thread_id}}
 
+        # time and generate the response
         response_time_start = perf_counter()
         response = await agent.ainvoke({"messages": question_dict["question"]}, config=config)
         response_time = perf_counter() - response_time_start
 
-        tool_calls = [
-            tool_call
-            for message in response["messages"]
-            if isinstance(message, AIMessage)
-            and hasattr(message, "tool_calls")
-            and message.tool_calls
-            for tool_call in message.tool_calls
-        ]
-
-        # capture all text2cypher queries
-        cyphers = [c.get("args") for c in tool_calls if c.get("name") == "read_neo4j_cypher"]
-
-        rouge_score = await rouge_scorer.ascore(
-            reference=question_dict.get("answer"), response=response["messages"][-1].content
+        # Create metadata record
+        metadata_record = await create_metadata_record(
+            question_id=question_dict.get("id"),
+            question=question_dict.get("question"),
+            expected_answer=question_dict.get("answer"),
+            agent_response=response,
+            model=model,
+            available_tools=tools,
+            response_time=response_time,
         )
 
-        sample = SingleTurnSample(
-            response=response["messages"][-1].content,
-            reference=question_dict.get("answer"),
-        )
-        # we have to use the SingleTurnSample for factual correctness
-        factual_correctness_score = await factual_correctness_scorer.single_turn_ascore(sample)
-
-        answer_relevancy_score = await answer_relevancy_scorer.ascore(
-            user_input=question_dict.get("question"), response=response["messages"][-1].content
-        )
-
-        print(f"Completed evaluation for question: {question_dict.get('question')}")
-        return ResponseTableRecord(
+        # Create agent response record
+        agent_response_record = await create_agent_response_record(
             question_id=question_dict.get("id"),
             question=question_dict.get("question"),
             expected_answer=question_dict.get("answer"),
             agent_final_answer=response["messages"][-1].content,
-            generated_cypher=cyphers,
             model=model,
-            available_tools=[t.name for t in tools],
-            called_tools=tool_calls,
-            num_messages=len(response["messages"]),
-            num_llm_calls=len([m for m in response["messages"] if isinstance(m, AIMessage)]),
-            num_tool_calls=len(tool_calls),
-            response_time=response_time,
-            error=None,
-            rouge_f1_score=rouge_score.value,
-            factual_correctness_f1_score=factual_correctness_score,
-            answer_relevancy_score=answer_relevancy_score.value,
         )
+
+        # Update record lists
+        metadata_records.append(metadata_record)
+        agent_response_records.append(agent_response_record)
+
+        print(f"Completed evaluation for question: {question_dict.get('question')}")
 
     except Exception as e:
         print(f"Error: {e}")
-        return ResponseTableRecord(
+
+        failed_response_record = create_failed_response_record(
             question_id=question_dict.get("id"),
             question=question_dict.get("question"),
             expected_answer=question_dict.get("answer"),
-            agent_final_answer=None,
-            generated_cypher=list(),
-            model=model,
-            available_tools=[t.name for t in tools],
-            called_tools=list(),
-            num_messages=None,
-            num_llm_calls=None,
-            num_tool_calls=None,
-            response_time=None,
             error=str(e),
-            rouge_f1_score=None,
-            factual_correctness_f1_score=None,
-            answer_relevancy_score=None,
         )
+
+        failed_response_records.append(failed_response_record)
+
 
 
 async def _evaluate_single_batch(
@@ -169,8 +116,11 @@ async def _evaluate_single_batch(
     batch: list[QuestionRecord],
     prompt: str,
     tools: list[StructuredTool],
+    metadata_records: list[MetadataTableRecord],
+    agent_response_records: list[AgentResponseTableRecord],
+    failed_response_records: list[FailedResponseTableRecord],
     model: str = "openai:gpt-4.1",
-) -> list[ResponseTableRecord]:
+) -> None:
     """
     Evaluate a batch of questions asynchronously.
 
@@ -181,12 +131,15 @@ async def _evaluate_single_batch(
 
     Returns
     -------
-    list[ResponseTableRecord]
-        A list of response table records containing the agent response and associated metadata.
+    None
+        The metadata and agent response records are updated in place.
     """
 
     tasks = [
-        evaluate_single_question(agent, question_dict, tools, model) for question_dict in batch
+        evaluate_single_question(
+            agent, question_dict, tools, metadata_records, agent_response_records, failed_response_records, model
+        )
+        for question_dict in batch
     ]
     return await asyncio.gather(*tasks)
 
@@ -196,9 +149,12 @@ async def _evaluate_batches(
     questions: list[QuestionRecord],
     prompt: str,
     tools: list[StructuredTool],
+    metadata_records: list[MetadataTableRecord],
+    agent_response_records: list[AgentResponseTableRecord],
+    failed_response_records: list[FailedResponseTableRecord],
     model: str = "openai:gpt-4.1",
     batch_size: int = 10,
-) -> list[ResponseTableRecord]:
+) -> None:
     """
     Evaluate questions in batches.
 
@@ -210,6 +166,10 @@ async def _evaluate_batches(
         The system prompt to use.
     tools : list[StructuredTool]
         The tools to use.
+    metadata_records: list[MetadataTableRecord]
+        A list of metadata records to store the metadata for the agent responses.
+    agent_response_records: list[AgentResponseTableRecord]
+        A list of agent response records to store the agent responses.
     model : str
         The model to use.
     batch_size : int
@@ -217,8 +177,8 @@ async def _evaluate_batches(
 
     Returns
     -------
-    list[ResponseTableRecord]
-        A list of response table records containing the agent response and associated metadata.
+    None
+        The metadata and agent response records are updated in place.
     """
 
     results = list()
@@ -231,7 +191,9 @@ async def _evaluate_batches(
             batch = questions[i:]
         else:
             batch = questions[i : i + batch_size]
-        batch_results = await _evaluate_single_batch(agent, batch, prompt, tools, model)
+        batch_results = await _evaluate_single_batch(
+            agent, batch, prompt, tools, metadata_records, agent_response_records, failed_response_records, model
+        )
 
         # Add extracted records to the results list
         results.extend(batch_results)
@@ -250,6 +212,9 @@ async def main():
     questions = get_questions_from_yaml("questions.yaml")
     print(f"Retrieved {len(questions)} questions for evaluation.")
 
+    metadata_records = list()
+    agent_response_records = list()
+    failed_response_records = list()
     async with stdio_client(neo4j_cypher_mcp) as (read, write):
         async with ClientSession(read, write) as session:
             # Initialize the connection
@@ -279,16 +244,53 @@ async def main():
                 prompt=prompt,
             )
 
-            eval_results = await _evaluate_batches(
-                agent, questions, prompt, allowed_tools, model, batch_size
+            await _evaluate_batches(
+                agent,
+                questions,
+                prompt,
+                allowed_tools,
+                metadata_records,
+                agent_response_records,
+                failed_response_records,
+                model,
+                batch_size,
             )
 
-            df = pd.DataFrame(eval_results)
+            timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            directory = (   
+                f"{evals_loc}eval_run_{timestamp}"
+            )
 
-            df.to_csv(
-                f"{evals_loc}eval_benchmark_results_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.csv",
+            os.makedirs(directory, exist_ok=True)
+
+            metadata_df = pd.DataFrame(metadata_records)
+            agent_response_df = pd.DataFrame(agent_response_records)
+
+            metadata_df.to_csv(
+                f"{directory}/metadata.csv",
                 index=False,
             )
+
+            agent_response_df.to_csv(
+                f"{directory}/agent_response.csv",
+                index=False,
+            )
+
+            failed_response_df = pd.DataFrame(failed_response_records, columns=list(FailedResponseTableRecord.__annotations__.keys()))
+            failed_response_df.to_csv(
+                f"{directory}/failed_response.csv",
+                index=False,
+            )
+
+            report = create_report_from_dataframes(
+                title=f"Evaluation Report {timestamp}",
+                agent_response_df=agent_response_df,
+                metadata_df=metadata_df,
+                failed_response_df=failed_response_df,
+            )
+
+            with open(f"{directory}/report.txt", "w") as f:
+                f.write(report)
 
 
 if __name__ == "__main__":

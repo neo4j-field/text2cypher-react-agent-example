@@ -1,0 +1,25 @@
+question_id,question,expected_answer,agent_final_answer,model,rouge_f1_score,factual_correctness_f1_score,answer_relevancy_score,error
+actor_director_same_movie,What movies did Tom Hanks direct and act in?,Larry Crowne (2011) - Tom Hanks both directed and starred in this romantic comedy film.,"Tom Hanks both directed and acted in the movie Larry Crowne (2011). This is the only film where he held both roles, according to the database. If you would like more information about this movie or Tom Hanks's other acting or directing work, let me know!",openai:gpt-4.1,0.2622950819672131,0.57,0.5780160191645289,
+top_rated_movies,What are the top 5 highest-rated movies by IMDb rating?,"1. Band of Brothers (9.6), 2. Civil War, The (9.5), 3. Cosmos (9.3), 4. Shawshank Redemption, The (9.3), 5. Decalogue, The (Dekalog) (9.2)","The top 5 highest-rated movies by IMDb rating in the database are:
+
+1. Band of Brothers (2001) – IMDb Rating: 9.6
+2. The Civil War (1990) – IMDb Rating: 9.5
+3. The Shawshank Redemption (1994) – IMDb Rating: 9.3
+4. Cosmos (1980) – IMDb Rating: 9.3
+5. The Godfather (1972) – IMDb Rating: 9.2
+
+These films lead the IMDb charts according to the ratings stored in the database.",openai:gpt-4.1,0.4329896907216495,0.0,0.9999994385761889,
+most_prolific_actors,Which actors have appeared in the most movies?,"1. Robert De Niro (56 movies), 2. Bruce Willis (49 movies), 3. Samuel L. Jackson (45 movies), 4. Nicolas Cage (45 movies), 5. Clint Eastwood (40 movies)","The actors who have appeared in the most movies in the database are:
+
+1. Robert De Niro – 56 movies
+2. Bruce Willis – 49 movies
+3. Nicolas Cage – 45 movies
+4. Samuel L. Jackson – 45 movies
+5. Michael Caine – 40 movies
+6. Clint Eastwood – 40 movies
+7. John Cusack – 38 movies
+8. John Travolta – 38 movies
+9. Gene Hackman – 38 movies
+10. Tom Hanks – 38 movies
+
+These figures are based on the movie database schema where actors are connected to movies via the ACTED_IN relationship. Robert De Niro, with 56 films, is the most prolific actor in this dataset.",openai:gpt-4.1,0.3492063492063492,0.63,0.8912029751163725,

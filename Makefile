@@ -17,16 +17,16 @@ run-agent:
 	python3 single_file_agent.py
 
 run-eval-uv:
-	uv run python3 eval.py
+	uv run python3 -m evaluation.main
 
 run-eval:
-	python3 eval.py
+	python3 -m evaluation.main
 
 generate-report-uv:
-	uv run python3 scripts/generate_report.py $(csv-name)
+	uv run python3 evaluation/components/generate_report.py $(csv-name)
 
 generate-report:
-	python3 scripts/generate_report.py $(csv-name)
+	python3 evaluation/components/generate_report.py $(csv-name)
 
 help:
 	@echo '----'
